@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Resource Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">&#9679;</span>
+        <div>
+          <h1>System Resource Monitor</h1>
+          <p class="sub">Live CPU, memory and disk usage, read straight from this container</p>
+          <p class="status-line">
+            <span class="status-dot" id="system-status-dot"></span>
+            <span id="system-status-text">Checking status&hellip;</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="topbar-meta">
+        <dl class="meta-list">
+          <div><dt>Host</dt><dd id="host-name">&mdash;</dd></div>
+          <div><dt>Uptime</dt><dd id="host-uptime">&mdash;</dd></div>
+        </dl>
+        <div class="status-pill" id="live-pill">
+          <span class="dot"></span>
+          <span id="live-text">Connecting&hellip;</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="stat-grid">
+
+      <article class="stat-card" data-metric="cpu">
+        <div class="stat-head">
+          <span class="stat-label">Processor</span>
+          <h2 class="stat-name">CPU Usage</h2>
+        </div>
+        <div class="stat-body">
+          <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+            <circle class="ring-value" id="cpu-ring" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div class="stat-number-wrap">
+            <span class="stat-number" id="cpu-percent">&mdash;</span>
+            <span class="stat-detail" id="cpu-detail">reading cores&hellip;</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="stat-card" data-metric="mem">
+        <div class="stat-head">
+          <span class="stat-label">RAM</span>
+          <h2 class="stat-name">Memory Usage</h2>
+        </div>
+        <div class="stat-body">
+          <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+            <circle class="ring-value" id="mem-ring" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div class="stat-number-wrap">
+            <span class="stat-number" id="mem-percent">&mdash;</span>
+            <span class="stat-detail" id="mem-detail">&mdash; / &mdash; GB</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="stat-card" data-metric="disk">
+        <div class="stat-head">
+          <span class="stat-label">Storage</span>
+          <h2 class="stat-name">Disk Usage</h2>
+        </div>
+        <div class="stat-body">
+          <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+            <circle class="ring-value" id="disk-ring" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div class="stat-number-wrap">
+            <span class="stat-number" id="disk-percent">&mdash;</span>
+            <span class="stat-detail" id="disk-detail">&mdash; / &mdash; GB</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="stat-card plain" data-metric="proc">
+        <div class="stat-head">
+          <span class="stat-label">Processes</span>
+          <h2 class="stat-name">Running</h2>
+        </div>
+        <div class="stat-body plain-body">
+          <span class="stat-number big" id="proc-count">&mdash;</span>
+          <span class="stat-detail">visible inside this container</span>
+        </div>
+      </article>
+
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>CPU Activity</h2>
+          <p class="sub">Last 60 readings &middot; updates every 2 seconds &middot; scale auto-fits recent range</p>
+        </div>
+        <span class="live-tag" id="chart-live-tag">LIVE</span>
+      </div>
+      <canvas id="cpu-chart" height="96"></canvas>
+    </section>
+
+    <section class="detail-grid">
+
+      <div class="panel small detail-panel">
+        <h3><span class="detail-icon mem"></span>Memory Details</h3>
+        <dl>
+          <div class="dl-row"><dt>Available</dt><dd id="mem-available">&mdash;</dd></div>
+          <div class="dl-row"><dt>Swap used</dt><dd id="swap-used">&mdash;</dd></div>
+          <div class="dl-row"><dt>Swap total</dt><dd id="swap-total">&mdash;</dd></div>
+        </dl>
+      </div>
+
+      <div class="panel small detail-panel">
+        <h3><span class="detail-icon net"></span>Network</h3>
+        <dl>
+          <div class="dl-row"><dt>Bytes sent</dt><dd id="net-sent">&mdash;</dd></div>
+          <div class="dl-row"><dt>Bytes received</dt><dd id="net-recv">&mdash;</dd></div>
+          <div class="dl-row"><dt>Packets sent</dt><dd id="net-packets-sent">&mdash;</dd></div>
+          <div class="dl-row"><dt>Packets received</dt><dd id="net-packets-recv">&mdash;</dd></div>
+        </dl>
+      </div>
+
+      <div class="panel small detail-panel">
+        <h3><span class="detail-icon cpu"></span>CPU Details</h3>
+        <dl>
+          <div class="dl-row"><dt>Current frequency</dt><dd id="cpu-freq-current">&mdash;</dd></div>
+          <div class="dl-row"><dt>Max frequency</dt><dd id="cpu-freq-max">&mdash;</dd></div>
+          <div class="dl-row"><dt>Logical cores</dt><dd id="cpu-cores-detail">&mdash;</dd></div>
+        </dl>
+      </div>
+
+    </section>
+
+    <section class="footer-grid">
+      <div class="panel small">
+        <h3>Monitor Status</h3>
+        <dl>
+          <div class="dl-row"><dt>Status</dt><dd id="monitor-status">Starting&hellip;</dd></div>
+          <div class="dl-row"><dt>Refresh rate</dt><dd>2 seconds</dd></div>
+        </dl>
+      </div>
+      <div class="panel small">
+        <h3>Latest Update</h3>
+        <dl>
+          <div class="dl-row"><dt>Last updated</dt><dd id="last-updated">&mdash;</dd></div>
+          <div class="dl-row"><dt>Connection</dt><dd id="connection-status">Connecting&hellip;</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <footer class="page-footer">
+      <span>Resource Monitor &middot; Flask + psutil, containerized on Ubuntu</span>
+    </footer>
+
+  </div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
